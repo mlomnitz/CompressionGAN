@@ -70,7 +70,7 @@ def main(**kwargs):
     parser.add_argument("-i", "--image_path", help="path to image to compress", type=str)
     parser.add_argument("-sm", "--semantic_map_path", help="path to corresponding semantic map", type=str)
     parser.add_argument("-o", "--output_path", help="path to output image", type=str)
-    parser.add_argument("-ds", "--dataset", default="cityscapes", help="choice of training dataset. Currently only supports cityscapes/ADE20k", choices=set(("cityscapes", "ADE20k")), type=str)
+    parser.add_argument("-ds", "--dataset", default="cityscapes", help="choice of training dataset. Currently only supports cityscapes/ADE20k/faces", choices=set(("cityscapes", "ADE20k", "faces")), type=str)
     args = parser.parse_args()
 
     # Launch training

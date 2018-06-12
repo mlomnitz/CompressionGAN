@@ -41,7 +41,7 @@ class Network(object):
             # Feature maps have dimension W/16 x H/16 x C
             out = tf.pad(out, [[0, 0], [1, 1], [1, 1], [0, 0]], 'REFLECT')
             feature_map = conv_block(out, filters=C, kernel_size=3, strides=1, padding='VALID', actv=actv)
-            
+            print('feature map shape', feature_map.shape)
             return feature_map
 
 
@@ -136,9 +136,13 @@ class Network(object):
             f = [480, 240, 120, 60]
 
             ups = upsample_block(res, f[0], 3, strides=[2,2], padding='same')
+            print("ups", ups.shape)
             ups = upsample_block(ups, f[1], 3, strides=[2,2], padding='same')
+            print("ups", ups.shape)
             ups = upsample_block(ups, f[2], 3, strides=[2,2], padding='same')
+            print("ups", ups.shape)
             ups = upsample_block(ups, f[3], 3, strides=[2,2], padding='same')
+            print("ups", ups.shape)
             
             ups = tf.pad(ups, [[0, 0], [3, 3], [3, 3], [0, 0]], 'REFLECT')
             ups = tf.layers.conv2d(ups, 3, kernel_size=7, strides=1, padding='VALID')
@@ -229,32 +233,34 @@ class Network(object):
         init =  tf.contrib.layers.xavier_initializer()
         kwargs = {'center':True, 'scale':True, 'training':training, 'fused':True, 'renorm':False}
         with tf.variable_scope('noise_generator', reuse=reuse):
-
+            
             # [batch_size, 4, 8, dim]
             with tf.variable_scope('fc1', reuse=reuse):
-                h2 = tf.layers.dense(z, units=4 * 8 * upsample_dim, activation=actv, kernel_initializer=init)  # cifar-10
+                #Lomnitz
+                #h2 = tf.layers.dense(z, units=4 * 8 * upsample_dim, activation=actv, kernel_initializer=init)  # cifar-10
+                h2 = tf.layers.dense(z, units=4 * 4 * upsample_dim, activation=actv, kernel_initializer=init)  # cifar-10
                 h2 = tf.layers.batch_normalization(h2, **kwargs)
-                h2 = tf.reshape(h2, shape=[-1, 4, 8, upsample_dim])
-
+                h2 = tf.reshape(h2, shape=[-1, 4, 4, upsample_dim])
+                print('h2 ',h2.shape)
             # [batch_size, 8, 16, dim/2]
             with tf.variable_scope('upsample1', reuse=reuse):
                 up1 = tf.layers.conv2d_transpose(h2, upsample_dim//2, kernel_size=kernel_size, strides=2, padding='same', activation=actv)
                 up1 = tf.layers.batch_normalization(up1, **kwargs)
-
+                print("up1 ", up1.shape)
             # [batch_size, 16, 32, dim/4]
             with tf.variable_scope('upsample2', reuse=reuse):
                 up2 = tf.layers.conv2d_transpose(up1, upsample_dim//4, kernel_size=kernel_size, strides=2, padding='same', activation=actv)
                 up2 = tf.layers.batch_normalization(up2, **kwargs)
-            
+                print("up2 ", up2.shape)
             # [batch_size, 32, 64, dim/8]
             with tf.variable_scope('upsample3', reuse=reuse):
                 up3 = tf.layers.conv2d_transpose(up2, upsample_dim//8, kernel_size=kernel_size, strides=2, padding='same', activation=actv)  # cifar-10
                 up3 = tf.layers.batch_normalization(up3, **kwargs)
-
+                print("up3 ", up3.shape)
             with tf.variable_scope('conv_out', reuse=reuse):
                 out = tf.pad(up3, [[0, 0], [3, 3], [3, 3], [0, 0]], 'REFLECT')
                 out = tf.layers.conv2d(out, C, kernel_size=7, strides=1, padding='VALID')
-
+                print("out ", out.shape)
         return out
 
     @staticmethod

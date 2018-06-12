@@ -38,7 +38,10 @@ class Data(object):
                 return tf.image.resize_image_with_crop_or_pad(image, new_height, width)
 
             def _image_decoder(path):
-                im = tf.image.decode_png(tf.read_file(path), channels=3)
+                if training_dataset == 'faces':
+                    im = tf.image.decode_png(tf.read_file(path), channels=3)
+                else:
+                    im = tf.image.decode_png(tf.read_file(path), channels=3)
                 im = tf.image.convert_image_dtype(im, dtype=tf.float32)
                 return 2 * im - 1 # [0,1] -> [-1,1] (tanh range)
                     
@@ -59,6 +62,10 @@ class Data(object):
                 if use_conditional_GAN:
                     semantic_map = _aspect_preserving_width_resize(semantic_map)
                 # im.set_shape([None,512,3])
+
+            if training_dataset == 'faces':
+                image.set_shape([32,32,3])
+                #image = _aspect_preserving_width_resize(image)
 
             if use_conditional_GAN:
                 return image, semantic_map

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+class image_properties(object):
+    depth = 1
+    height = 32
+    width = 32
+
 class config_train(object):
     mode = 'gan-train'
     num_epochs = 512

@@ -59,7 +59,7 @@ class Model():
         with tf.variable_scope('generator'):
             self.feature_map = Network.encoder(self.example, config, self.training_phase, config.channel_bottleneck)
             self.w_hat = Network.quantizer(self.feature_map, config)
-
+            
             if config.use_conditional_GAN:
                 self.semantic_feature_map = Network.encoder(self.semantic_map, config, self.training_phase, 
                     config.channel_bottleneck, scope='semantic_map')
@@ -74,10 +74,12 @@ class Model():
                 noise_prior = tf.contrib.distributions.MultivariateNormalDiag(loc=tf.zeros([config.noise_dim]), scale_diag=tf.ones([config.noise_dim]))
                 v = noise_prior.sample(tf.shape(self.example)[0])
                 Gv = Network.dcgan_generator(v, config, self.training_phase, C=config.channel_bottleneck, upsample_dim=config.upsample_dim)
+                print("Lomnitz1 w = ", self.w_hat.shape, " and Gv ", Gv.shape)
                 self.z = tf.concat([self.w_hat, Gv], axis=-1)
             else:
                 self.z = self.w_hat
 
+            print("Lomnitz w_size",self.z.shape)
             self.reconstruction = Network.decoder(self.z, config, self.training_phase, C=config.channel_bottleneck)
 
         print('Real image shape:', self.example.get_shape().as_list())
@@ -93,7 +95,6 @@ class Model():
             # Model conditional distribution
             self.example = tf.concat([self.example, self.semantic_map], axis=-1)
             self.reconstruction = tf.concat([self.reconstruction, self.semantic_map], axis=-1)
-
         if config.multiscale:
             D_x, D_x2, D_x4, *Dk_x = Network.multiscale_discriminator(self.example, config, self.training_phase, 
                 use_sigmoid=config.use_vanilla_GAN, mode='real')
