@@ -39,7 +39,7 @@ class Data(object):
 
             def _image_decoder(path):
                 if training_dataset == 'faces':
-                    im = tf.image.decode_png(tf.read_file(path), channels=3)
+                    im = tf.image.decode_jpeg(tf.read_file(path), channels=3)
                 else:
                     im = tf.image.decode_png(tf.read_file(path), channels=3)
                 im = tf.image.convert_image_dtype(im, dtype=tf.float32)
