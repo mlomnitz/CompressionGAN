@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+"""
+Module loads and builds the full model using the building blocks loaded from network.py
+Code borrows from implementation provided by Justin-Tan (https://github.com/Justin-Tan/generative-compression)
+and is further modified for trianing on portraits data set with variable input image shapes
+"""
+
     
 import tensorflow as tf
 import numpy as np
@@ -11,6 +17,19 @@ from utils import Utils
 
 class Model():
     def __init__(self, config, paths, dataset, name='gan_compression', evaluate=False):
+
+        """
+        Model init, builds full model from network components
+        Args:
+        - config: Configuation for model archicture, dataset, etc.
+        - paths: Paths to data location (train/validation/test)
+        - dataset: Dataset name
+        - name: Full model name
+        - evaluate: Switch for training/inference
+        Returns
+        - evauluate = True: model will return encoder/decoder pair
+        - evaluate = False: model will return encoder/decode pair as well as discriminator
+        """
 
         # Build the computational graph
 
@@ -74,12 +93,10 @@ class Model():
                 noise_prior = tf.contrib.distributions.MultivariateNormalDiag(loc=tf.zeros([config.noise_dim]), scale_diag=tf.ones([config.noise_dim]))
                 v = noise_prior.sample(tf.shape(self.example)[0])
                 Gv = Network.dcgan_generator(v, config, self.training_phase, C=config.channel_bottleneck, upsample_dim=config.upsample_dim)
-                print("Lomnitz1 w = ", self.w_hat.shape, " and Gv ", Gv.shape)
                 self.z = tf.concat([self.w_hat, Gv], axis=-1)
             else:
                 self.z = self.w_hat
 
-            print("Lomnitz w_size",self.z.shape)
             self.reconstruction = Network.decoder(self.z, config, self.training_phase, C=config.channel_bottleneck)
 
         print('Real image shape:', self.example.get_shape().as_list())

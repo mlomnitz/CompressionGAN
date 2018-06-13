@@ -1,5 +1,7 @@
-""" Modular components of computational graph
-    JTan 2018
+""" 
+Modular components for tensorflow graphs
+Code borrows from implementation provided by Justin-Tan (https://github.com/Justin-Tan/generative-compression)
+and is further modified for trianing on portraits data set with variable input image shapes
 """
 import tensorflow as tf
 from utils import Utils
@@ -9,9 +11,12 @@ class Network(object):
     @staticmethod
     def encoder(x, config, training, C, reuse=False, actv=tf.nn.relu, scope='image'):
         """
-        Process image x ([512,1024]) into a feature map of size W/16 x H/16 x C
-         + C:       Bottleneck depth, controls bpp
-         + Output:  Projection onto C channels, C = {2,4,8,16}
+        Process image x ([WxH]) into a feature map of size W/16 x H/16 x C
+        Args:
+        - config: Model configuration parameters
+        - C: Bottleneck depth, controls bits per pixel (bpp) in compression
+        Output:  
+        - Projection onto C channels, C = {2,4,8,16}
         """
         init = tf.contrib.layers.xavier_initializer()
         print('<------------ Building global {} generator architecture ------------>'.format(scope))
@@ -52,9 +57,13 @@ class Network(object):
     @staticmethod
     def quantizer(w, config, reuse=False, temperature=1, L=5, scope='image'):
         """
-        Quantize feature map over L centers to obtain discrete $\hat{w}$
-         + Centers: {-2,-1,0,1,2}
-         + TODO:    Toggle learnable centers?
+        Quantize feature map over L centers to obtain discrete representation using Voronoi tesselation
+        Args:
+        - w: Feature map from encoder
+        - config: Model configuration parameters
+        - L: number of centers for quantization
+        Ouptut:
+        - Quantized feature map 
         """
         with tf.variable_scope('quantizer_{}'.format(scope, reuse=reuse)):
 
@@ -76,11 +85,15 @@ class Network(object):
     @staticmethod
     def decoder(w_bar, config, training, C, reuse=False, actv=tf.nn.relu, channel_upsample=960):
         """
-        Attempt to reconstruct the image from the quantized representation w_bar.
-        Generated image should be consistent with the true image distribution while
-        recovering the specific encoded image
-        + C:        Bottleneck depth, controls bpp - last dimension of encoder output
-        + TODO:     Concatenate quantized w_bar with noise sampled from prior
+        Decode quantized feature map to reconstruct image consistent with encoder input
+        Args:
+        - w_bar: Quantized feature map
+        - config: Model configuration
+        - C: Bottleneck neck depts, controls compression (bpp) 
+        - actv: Activation function for different layers
+        - channel_upsample: Channels to uspample. Mirrors encoder
+        Ouptput:
+        - Reconstructed image x_hat
         """
         init = tf.contrib.layers.xavier_initializer()
 
@@ -159,6 +172,16 @@ class Network(object):
 
     @staticmethod
     def discriminator(x, config, training, reuse=False, actv=tf.nn.leaky_relu, use_sigmoid=False, ksize=4):
+        """
+        Discriminator network should differentiate between real and generated(reconstructed) images x[WxH] to train 
+        Encoder/decoder pair
+        Args:
+        - config: Model configuration
+        - actv: Activation function for discriminator units
+        - ksize: Kernel size for convolutional layers
+        Output:
+        Image classification as either real or generated
+        """
         # x is either generator output G(z) or drawn from the real data distribution
         # Patch-GAN discriminator based on arXiv 1711.11585
         # bn_kwargs = {'center':True, 'scale':True, 'training':training, 'fused':True, 'renorm':False}
@@ -232,8 +255,14 @@ class Network(object):
     def dcgan_generator(z, config, training, C, reuse=False, actv=tf.nn.relu, kernel_size=5, upsample_dim=256):
         """
         Upsample noise to concatenate with quantized representation w_bar.
-        + z:    Drawn from latent distribution - [batch_size, noise_dim]
-        + C:    Bottleneck depth, controls bpp - last dimension of encoder output
+        Args:
+        - z: Randomly drawn from latent distribution - [batch_size, noise_dim]
+        - C: Bottleneck depth, controls bpp - last dimension of encoder output
+        Output
+        Noise distribution concatenated into quantized feature map
+        TODO:
+        - Needs to be generalized for use with arbitrary image sizes
+        - As of yet is dead code for very low res images
         """
         init =  tf.contrib.layers.xavier_initializer()
         kwargs = {'center':True, 'scale':True, 'training':training, 'fused':True, 'renorm':False}

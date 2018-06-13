@@ -1,4 +1,9 @@
 #!/usr/bin/python3
+"""
+Script to run inference (i.e. image encoding and decoding) on a single image.
+Code borrows from implementation provided by Justin-Tan (https://github.com/Justin-Tan/generative-compression)
+and is further modified for trianing on portraits data set with variable input image shapes
+"""
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -15,6 +20,17 @@ from config import config_test, directories
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 def single_compress(config, args):
+    """
+    Encode and decode a single image using a pre-trained network
+    Args:
+    - config: Model configuration parameters
+    - args: Parsed arguments for inference
+    Output:
+    Image with original and reconstructed images, side by side
+    TODOs:
+    - Return and save the compressed and quantized feature map 
+    - Provide funcitonality to de-compress image from quantized feature map input
+    """
     start = time.time()
     ckpt = tf.train.get_checkpoint_state(directories.checkpoints)
     assert (ckpt.model_checkpoint_path), 'Missing checkpoint file!'
@@ -64,6 +80,15 @@ def single_compress(config, args):
 
 
 def main(**kwargs):
+    """
+    Script main, parses arguments and runs the inference on an image
+    Args:
+    - Arguments to be parsed and passed during inference
+    Output:
+    TODOs:
+    - Provide option to run decoding on compressed representation. 
+    - Provide argument option to specify locaiton to save compressed image (i.e. quantized feature map)
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-rl", "--restore_last", help="restore last saved model", action="store_true")
     parser.add_argument("-r", "--restore_path", help="path to model to be restored", type=str)
