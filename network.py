@@ -31,17 +31,21 @@ class Network(object):
             f = [60, 120, 240, 480, 960]
             x = tf.pad(x, [[0, 0], [3, 3], [3, 3], [0, 0]], 'REFLECT')
             out = conv_block(x, filters=f[0], kernel_size=7, strides=1, padding='VALID', actv=actv)
-
+            print("Encoder - ", out.shape)
             out = conv_block(out, filters=f[1], kernel_size=3, strides=2, actv=actv)
+            print("Encoder - ", out.shape)
             out = conv_block(out, filters=f[2], kernel_size=3, strides=2, actv=actv)
+            print("Encoder - ", out.shape)
             out = conv_block(out, filters=f[3], kernel_size=3, strides=2, actv=actv)
+            print("Encoder - ", out.shape)
             out = conv_block(out, filters=f[4], kernel_size=3, strides=2, actv=actv)
+            print("Encoder - ", out.shape)
 
             # Project channels onto space w/ dimension C
             # Feature maps have dimension W/16 x H/16 x C
             out = tf.pad(out, [[0, 0], [1, 1], [1, 1], [0, 0]], 'REFLECT')
             feature_map = conv_block(out, filters=C, kernel_size=3, strides=1, padding='VALID', actv=actv)
-            print('feature map shape', feature_map.shape)
+            print("Encoder - ", feature_map.shape)
             return feature_map
 
 
@@ -119,8 +123,9 @@ class Network(object):
         # upsampled = tf.einsum('ijkl,lm->ijkm', w_bar, W_pc)
         with tf.variable_scope('decoder', reuse=reuse):
             w_bar = tf.pad(w_bar, [[0, 0], [1, 1], [1, 1], [0, 0]], 'REFLECT')
+            print("Decoder - ", w_bar.shape)
             upsampled = Utils.conv_block(w_bar, filters=960, kernel_size=3, strides=1, padding='VALID', actv=actv)
-            
+
             # Process upsampled feature map with residual blocks
             res = residual_block(upsampled, 960, actv=actv)
             res = residual_block(res, 960, actv=actv)
@@ -134,19 +139,19 @@ class Network(object):
 
             # Upsample to original dimensions - mirror decoder
             f = [480, 240, 120, 60]
-
+            print("Decoder - ", res.shape)
             ups = upsample_block(res, f[0], 3, strides=[2,2], padding='same')
-            print("ups", ups.shape)
+            print("Decoder - ", ups.shape)
             ups = upsample_block(ups, f[1], 3, strides=[2,2], padding='same')
-            print("ups", ups.shape)
+            print("Decoder - ", ups.shape)
             ups = upsample_block(ups, f[2], 3, strides=[2,2], padding='same')
-            print("ups", ups.shape)
+            print("Decoder - ", ups.shape)
             ups = upsample_block(ups, f[3], 3, strides=[2,2], padding='same')
-            print("ups", ups.shape)
-            
+            print("Decoder - ", ups.shape)
+
             ups = tf.pad(ups, [[0, 0], [3, 3], [3, 3], [0, 0]], 'REFLECT')
             ups = tf.layers.conv2d(ups, 3, kernel_size=7, strides=1, padding='VALID')
-
+            print("Decoder - ", ups.shape)
             out = tf.nn.tanh(ups)
 
             return out
@@ -241,26 +246,26 @@ class Network(object):
                 h2 = tf.layers.dense(z, units=4 * 4 * upsample_dim, activation=actv, kernel_initializer=init)  # cifar-10
                 h2 = tf.layers.batch_normalization(h2, **kwargs)
                 h2 = tf.reshape(h2, shape=[-1, 4, 4, upsample_dim])
-                print('h2 ',h2.shape)
+                print('Noise - ', h2.shape)
             # [batch_size, 8, 16, dim/2]
             with tf.variable_scope('upsample1', reuse=reuse):
                 up1 = tf.layers.conv2d_transpose(h2, upsample_dim//2, kernel_size=kernel_size, strides=2, padding='same', activation=actv)
                 up1 = tf.layers.batch_normalization(up1, **kwargs)
-                print("up1 ", up1.shape)
+                print('Noise - ', up1.shape)
             # [batch_size, 16, 32, dim/4]
             with tf.variable_scope('upsample2', reuse=reuse):
                 up2 = tf.layers.conv2d_transpose(up1, upsample_dim//4, kernel_size=kernel_size, strides=2, padding='same', activation=actv)
                 up2 = tf.layers.batch_normalization(up2, **kwargs)
-                print("up2 ", up2.shape)
+                print('Noise - ', up2.shape)
             # [batch_size, 32, 64, dim/8]
             with tf.variable_scope('upsample3', reuse=reuse):
                 up3 = tf.layers.conv2d_transpose(up2, upsample_dim//8, kernel_size=kernel_size, strides=2, padding='same', activation=actv)  # cifar-10
                 up3 = tf.layers.batch_normalization(up3, **kwargs)
-                print("up3 ", up3.shape)
+                print('Noise - ', up3.shape)
             with tf.variable_scope('conv_out', reuse=reuse):
                 out = tf.pad(up3, [[0, 0], [3, 3], [3, 3], [0, 0]], 'REFLECT')
                 out = tf.layers.conv2d(out, C, kernel_size=7, strides=1, padding='VALID')
-                print("out ", out.shape)
+                print('Noise - ', out.shape)
         return out
 
     @staticmethod
