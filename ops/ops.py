@@ -61,5 +61,5 @@ def restore_chkp(ckpt_file, output_ckpt):
     
     with tf.Session() as sess:
         saver = tf.train.import_meta_graph(ckpt_file+'.meta')
-        saver.restore(sess, hkpt_file)
+        saver.restore(sess, ckpt_file)
         saver.save(sess,output_ckpt)
