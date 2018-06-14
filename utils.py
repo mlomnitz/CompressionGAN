@@ -8,8 +8,9 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
+import h5py
 
-from config import directories
+from config import directories, image_properties
 
 class Utils(object):
     
@@ -102,16 +103,19 @@ class Utils(object):
 
         real = model.example
         gen = model.reconstruction
-
+        quantized_z = model.z
         # Generate images from noise, using the generator network.
-        r, g = sess.run([real, gen], feed_dict={model.training_phase:True, model.handle: handle})
+        r, g, z = sess.run([real, gen, quantized_z], feed_dict={model.training_phase:True, model.handle: handle})
 
         images = list()
 
         for im, imtype in zip([r,g], ['real', 'gen']):
             im = ((im+1.0))/2  # [-1,1] -> [0,1]
             im = np.squeeze(im)
-            im = im[:,:,:3]
+            if image_properties.depth == 1:
+                im = im[:,:,]
+            else:
+                im = im[:,:,:3]
             images.append(im)
 
             # Uncomment to plot real and generated samples separately
@@ -122,13 +126,13 @@ class Utils(object):
             #                     global_step, imtype), format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
             # plt.gcf().clear()
             # plt.close(f)
-
         comparison = np.hstack(images)
         f = plt.figure()
         plt.imshow(comparison)
         plt.axis('off')
         if single_compress:
             f.savefig(name, format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
+            write_compressed_file(z,name)
         else:
             f.savefig("{}/gan_compression_{}_epoch{}_step{}_{}_comparison.pdf".format(directories.samples, name, epoch,
                 global_step, imtype), format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
@@ -146,3 +150,13 @@ class Utils(object):
 
         return tf.multiply(weight_decay, tf.add_n(costs))
 
+def write_compressed_file(np_array, out_file = 'compressed_x'):
+    #np_array = tf.Session().run(tf_array)
+    with h5py.File(out_file+'.h5', 'w') as hf:
+        hf.create_dataset("quantized_image",  data=np_array)
+
+def read_compressed_file(input_file):
+    with h5py.File(input_file, 'r') as hf:
+        data = hf['quantized_image'][:]
+        tf_array = tf.convert_to_tensor(data)
+    return tf_array
