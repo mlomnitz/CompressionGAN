@@ -2,7 +2,7 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from config import directories
+from config import directories, image_properties
 
 class Data(object):
 
@@ -39,7 +39,7 @@ class Data(object):
 
             def _image_decoder(path):
                 if training_dataset == 'faces':
-                    im = tf.image.decode_jpeg(tf.read_file(path), channels=3)
+                    im = tf.image.decode_jpeg(tf.read_file(path), channels=image_properties.depth)
                 else:
                     im = tf.image.decode_png(tf.read_file(path), channels=3)
                 im = tf.image.convert_image_dtype(im, dtype=tf.float32)
@@ -64,7 +64,7 @@ class Data(object):
                 # im.set_shape([None,512,3])
 
             if training_dataset == 'faces':
-                image.set_shape([32,32,3])
+                image.set_shape([image_properties.height,image_properties.width,image_properties.depth])
                 #image = _aspect_preserving_width_resize(image)
 
             if use_conditional_GAN:

@@ -5,6 +5,7 @@ and is further modified for trianing on portraits data set with variable input i
 """
 import tensorflow as tf
 from utils import Utils
+from config import image_properties
 
 class Network(object):
 
@@ -163,7 +164,7 @@ class Network(object):
             print("Decoder - ", ups.shape)
 
             ups = tf.pad(ups, [[0, 0], [3, 3], [3, 3], [0, 0]], 'REFLECT')
-            ups = tf.layers.conv2d(ups, 3, kernel_size=7, strides=1, padding='VALID')
+            ups = tf.layers.conv2d(ups, image_properties.depth, kernel_size=7, strides=1, padding='VALID')
             print("Decoder - ", ups.shape)
             out = tf.nn.tanh(ups)
 
