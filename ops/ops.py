@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from PIL import Image, ImageOps
 import numpy as np
-
+import h5py
+import pandas as pd
+import subprocess
 
 def mkdir(dirpath):
     if not os.path.isdir(dirpath):
@@ -41,3 +43,23 @@ def fit_to_canvas(image, desired_w, desired_h, method=Image.ANTIALIAS):
     padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
     new_im = ImageOps.expand(image, padding)
     return new_im
+
+def readDirToList(ds_loc):
+    raw_dir = subprocess.Popen('find '+ds_loc+' -type f', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf-8').strip()
+    file_list = raw_dir.splitlines() 
+    return pd.DataFrame(file_list)
+
+def splitTrainValiTest(df, fraction = [60,30,10]):
+    chunk_size_base = len(df) // 10
+    df_train = df[:5*chunk_size_base]
+    df_vali = df[6*chunk_size_base:8*chunk_size_base]
+    df_test = df[8*chunk_size_base:len(df)]
+    return df_train, df_vali, df_test  
+
+def saveToDataFrame( out_path, basename , file_list):
+    mkdir(out_path)
+    df_train, df_vali, df_test = splitTrainValiTest(file_list)    
+    df_train.to_hdf(out_path+basename+'_train.d5','df', table=True, mode='a')
+    df_test.to_hdf(out_path+basename+'_test.d5','df', table=True, mode='a')
+    df_vali.to_hdf(out_path+basename+'_validation.d5','df', table=True, mode='a')
+    
