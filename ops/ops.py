@@ -45,11 +45,28 @@ def fit_to_canvas(image, desired_w, desired_h, method=Image.ANTIALIAS):
     return new_im
 
 def readDirToList(ds_loc):
-    raw_dir = subprocess.Popen('find '+ds_loc+' -type f', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf-8').strip()
+    """
+    build a dictionary with the paths to file in a directory
+    Args:
+    - location of the data set
+    Output:
+    - returns pandas data frame with dictionary containing the list of files
+    """
+    raw_dir = subprocess.Popen('find '+ds_loc+' -type f -name "*.jpg"', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf-8').strip()
     file_list = raw_dir.splitlines() 
     return pd.DataFrame({'path':file_list})
 
 def splitTrainValiTest(df, fraction = [60,30,10]):
+    """
+    split the input data frame into training, validation and test samples
+    Args:
+    - df: input data frame to be split
+    - fraction: Percent of data to be used in training, validation and test
+    Output:
+    - Returns three data frames with samples for training, validation and testing
+    TODOs:
+    Need to randomize the lists for future use
+    """
     chunk_size_base = len(df) // 10
     df_train = df[:5*chunk_size_base]
     df_vali = df[6*chunk_size_base:8*chunk_size_base]
@@ -57,6 +74,15 @@ def splitTrainValiTest(df, fraction = [60,30,10]):
     return df_train, df_vali, df_test  
 
 def saveToDataFrame( out_path, basename , file_list):
+    """
+    save the three data frames to outpath with basename 
+    Args:
+    - out_path : Path for output files
+    - basename: File basenames for the three lists
+    - file_list: list of file paths
+    Output:
+    - Saves the three files, returns nothing
+    """
     mkdir(out_path)
     df_train, df_vali, df_test = splitTrainValiTest(file_list)
     print('Preparing lists [train, test, validation] ', len(df_train), len(df_vali), len(df_test))
