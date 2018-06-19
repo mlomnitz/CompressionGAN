@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+import os
 
 def restore_chkp(ckpt_file, output_ckpt):
     """
