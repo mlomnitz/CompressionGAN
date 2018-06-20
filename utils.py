@@ -9,6 +9,8 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import h5py
+import struct
+from array import array
 
 from config import directories, image_properties
 
@@ -101,11 +103,12 @@ class Utils(object):
     @staticmethod
     def single_plot(epoch, global_step, sess, model, handle, name, config, single_compress=False):
 
-        real = model.example
-        gen = model.reconstruction
-        quantized_z = model.z
+        real = model.example[0]
+        gen = model.reconstruction[0]
+        quantized_z = model.z[0]
         # Generate images from noise, using the generator network.
         r, g, z = sess.run([real, gen, quantized_z], feed_dict={model.training_phase:True, model.handle: handle})
+        #r, g= sess.run([real, gen], feed_dict={model.training_phase:True, model.handle: handle})
 
         images = list()
 
@@ -132,7 +135,7 @@ class Utils(object):
         plt.axis('off')
         if single_compress:
             f.savefig(name, format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
-            write_compressed_file(z,name)
+            write_compressed_file(z.astype(int),name)
         else:
             f.savefig("{}/gan_compression_{}_epoch{}_step{}_{}_comparison.pdf".format(directories.samples, name, epoch,
                 global_step, imtype), format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
@@ -151,9 +154,29 @@ class Utils(object):
         return tf.multiply(weight_decay, tf.add_n(costs))
 
 def write_compressed_file(np_array, out_file = 'compressed_x'):
+    bitstring = ''
+    for dim0 in np_array:
+        for dim1 in dim0:
+            for dim2 in dim1:
+                for dim3 in dim2:
+                    if dim3 == 0:
+                        bitstring+='00'
+                    elif dim3 == 1:
+                        bitstring+='10'
+                    elif dim3 == 2:
+                        bitstring+='01'
+    bin_array = array("B")
+
+    for index in range(0, len(bitstring), 8):
+        byte = bitstring[index:index + 8][::-1]
+        bin_array.append(int(byte, 2))
+        
+    with open(out_file+'.bin', 'wb') as f:
+        for b in bin_array:
+            f.write(struct.pack('h', b))
     #np_array = tf.Session().run(tf_array)
-    with h5py.File(out_file+'.h5', 'w') as hf:
-        hf.create_dataset("quantized_image",  data=np_array)
+    #with h5py.File(out_file+'.h5', 'w') as hf:
+    #    hf.create_dataset("quantized_image",  data=np_array)
 
 def read_compressed_file(input_file):
     with h5py.File(input_file, 'r') as hf:
