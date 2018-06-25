@@ -9,6 +9,8 @@ import numpy as np
 import h5py
 import pandas as pd
 import subprocess
+import random
+
 
 def mkdir(dirpath):
     if not os.path.isdir(dirpath):
@@ -44,7 +46,7 @@ def fit_to_canvas(image, desired_w, desired_h, method=Image.ANTIALIAS):
     new_im = ImageOps.expand(image, padding)
     return new_im
 
-def readDirToList(ds_loc):
+def readDirToList(ds_loc, randomize = True):
     """
     build a dictionary with the paths to file in a directory
     Args:
@@ -53,10 +55,12 @@ def readDirToList(ds_loc):
     - returns pandas data frame with dictionary containing the list of files
     """
     raw_dir = subprocess.Popen('find '+ds_loc+' -type f -name "*.jpg"', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf-8').strip()
-    file_list = raw_dir.splitlines() 
+    file_list = raw_dir.splitlines()
+    if randomize:
+        random.shuffle(file_list)
     return pd.DataFrame({'path':file_list})
 
-def splitTrainValiTest(df, fraction = [60,30,10]):
+def splitTrainValiTest(df, fraction = [70,20,10]):
     """
     split the input data frame into training, validation and test samples
     Args:
