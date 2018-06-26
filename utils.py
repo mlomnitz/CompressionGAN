@@ -105,7 +105,7 @@ class Utils(object):
 
         real = model.example[0]
         gen = model.reconstruction[0]
-        quantized_z = model.z[0]
+        quantized_z = model.z
         # Generate images from noise, using the generator network.
         r, g, z = sess.run([real, gen, quantized_z], feed_dict={model.training_phase:True, model.handle: handle})
         #r, g= sess.run([real, gen], feed_dict={model.training_phase:True, model.handle: handle})
@@ -122,13 +122,14 @@ class Utils(object):
             images.append(im)
 
             # Uncomment to plot real and generated samples separately
-            # f = plt.figure()
-            # plt.imshow(im)
-            # plt.axis('off')
-            # f.savefig("{}/gan_compression_{}_epoch{}_step{}_{}.pdf".format(directories.samples, name, epoch,
-            #                     global_step, imtype), format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
-            # plt.gcf().clear()
-            # plt.close(f)
+            f = plt.figure()
+            plt.imshow(im)
+            plt.axis('off')
+            if single_compress:
+                #f.savefig(name+'.jpg', format = 'jpg', dpi=720, bbox_inches='tight', pad_inches=0)
+                plt.imsave(name+'.jpg',np.asarray(im))
+                plt.gcf().clear()
+                plt.close(f)
         comparison = np.hstack(images)
         f = plt.figure()
         plt.imshow(comparison)
@@ -155,16 +156,16 @@ class Utils(object):
 
 def write_compressed_file(np_array, out_file = 'compressed_x'):
     bitstring = ''
-    for dim0 in np_array:
-        for dim1 in dim0:
-            for dim2 in dim1:
-                for dim3 in dim2:
-                    if dim3 == 0:
-                        bitstring+='00'
-                    elif dim3 == 1:
-                        bitstring+='10'
-                    elif dim3 == 2:
-                        bitstring+='01'
+    for 2_bit in np_array.flatten():
+        if 2_bit == 0:
+            bitstring+='00'
+        elif 2_bit == 1:
+            bitstring+='10'
+        elif 2_bit == 2:
+            bitstring+='01'
+        else:
+            print('Something went wrong' )
+    print('File size = ',len(bitstring))
     bin_array = array("B")
 
     for index in range(0, len(bitstring), 8):
