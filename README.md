@@ -13,4 +13,4 @@ This package provides an image compression algorithm using an auto-encoder in a 
 
 The network was trained using a subset of 40K images curated from the [DEX project](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/) to produce faithful reconstruction of human faces with a factor of 20-30 in compression.
 
-![training](./images/training_vizualize.gif)
+![training](./images/training_vizualize_full.gif)
