@@ -24,7 +24,7 @@ python setup.py install
 ```
 The data set used for training/validation/test can be downloaded with the following [link](https://storage.googleapis.com/comp_gan_public/imdb_quality_faces_v3.zip) 
 The following lists the available trained models and associated configuration files:
- - Model trained for 40 epochs, without noise sampling: [Epoch40](https://storage.googleapis.com/comp_gan_public/no_noise_epoc40/gan_epoch40.tar), [configfuration](https://storage.googleapis.com/comp_gan_public/no_noise_epoc40/config)
+ - Model trained for 40 epochs, without noise sampling: [Epoch40](https://storage.googleapis.com/comp_gan_public/no_noise_epoc40/gan_epoch40.tar), [configfuration](https://storage.googleapis.com/comp_gan_public/no_noise_epoc40/config.py)
 
 More trained models will be made available as future experiments are completed.
 
