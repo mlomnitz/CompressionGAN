@@ -15,13 +15,13 @@ setup(name=NAME,
       version='0.0.1',
       description=DESCRIPTION,
       license=LICENSE,
-#      long_description=LONG_DESCRIPTION,
       author=MAINTAINER,
       author_email=MAINTAINER_EMAIL,
       url=URL,
       packages=find_packages(),
       scripts=[
         'scripts/train.py',
-        'scripts/compress.py'
+        'scripts/compress.py',
+        'scripts/expand.py'
         ]
     )
