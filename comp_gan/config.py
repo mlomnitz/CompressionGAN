@@ -4,6 +4,7 @@ class image_properties(object):
     depth = 3
     height = 512
     width = 512
+    compressed_dims = [1, 32, 32, 8]
 
 class config_train(object):
     mode = 'gan-train'
