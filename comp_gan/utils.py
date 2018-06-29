@@ -135,14 +135,35 @@ class Utils(object):
         plt.imshow(comparison)
         plt.axis('off')
         if single_compress:
-            f.savefig(name, format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
-            write_compressed_file(z.astype(int),name)
+            f.savefig(name, format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)            
+            write_compressed_file(z,name)
         else:
             f.savefig("{}/gan_compression_{}_epoch{}_step{}_{}_comparison.pdf".format(directories.samples, name, epoch,
                 global_step, imtype), format='pdf', dpi=720, bbox_inches='tight', pad_inches=0)
         plt.gcf().clear()
         plt.close(f)
 
+    @staticmethod
+    def decode( sess, model, handle, input, name, config):
+        gen = model.reconstruction
+        # this needs to be loaded
+        quantized_z = read_compressed_file(input)
+        # Generate images from noise, using the generator network.
+        g = sess.run( gen, feed_dict={model.w_hat:quantized_z, model.training_phase:True, model.handle: handle})
+        # now plot the image
+        im = ((g+1.0))/2  # [-1,1] -> [0,1]
+        im = np.squeeze(im)
+        if image_properties.depth == 1:
+            im = im[:,:,]
+        else:
+            im = im[:,:,:3]
+
+        f = plt.figure()
+        plt.imshow(im)
+        plt.axis('off')
+        plt.imsave(name+'.jpg',np.asarray(im))
+        plt.gcf().clear()
+        plt.close(f)
 
     @staticmethod
     def weight_decay(weight_decay, var_label='DW'):
@@ -155,8 +176,9 @@ class Utils(object):
         return tf.multiply(weight_decay, tf.add_n(costs))
 
 def write_compressed_file(np_array, out_file = 'compressed_x'):
-    bitstring = ''
-    for center in np_array.flatten():
+
+    bitstring = ''            
+    for center in np_array.astype(int).flatten():
         if center == 0:
             bitstring+='00'
         elif center == 1:
@@ -165,22 +187,37 @@ def write_compressed_file(np_array, out_file = 'compressed_x'):
             bitstring+='01'
         else:
             print('Something went wrong' )
-    print('File size = ',len(bitstring))
-    bin_array = array("B")
-
-    for index in range(0, len(bitstring), 8):
-        byte = bitstring[index:index + 8][::-1]
-        bin_array.append(int(byte, 2))
         
-    with open(out_file+'.bin', 'wb') as f:
-        for b in bin_array:
-            f.write(struct.pack('h', b))
+    print('File size = ',len(bitstring))
+    with open(out_file+'.txt', 'w') as f:
+        f.write(bitstring)
+        #These blocks used to save file to bytes, come back to this lates
+#    bin_array = array("B")
+
+#    for index in range(0, len(bitstring), 8):
+#        byte = bitstring[index:index + 8][::-1]
+#        bin_array.append(int(byte, 2))
+        
+#    with open(out_file+'.bin', 'wb') as f:
+#        for b in bin_array:
+#            f.write(struct.pack('h', b))
     #np_array = tf.Session().run(tf_array)
     #with h5py.File(out_file+'.h5', 'w') as hf:
     #    hf.create_dataset("quantized_image",  data=np_array)
 
 def read_compressed_file(input_file):
-    with h5py.File(input_file, 'r') as hf:
-        data = hf['quantized_image'][:]
-        tf_array = tf.convert_to_tensor(data)
-    return tf_array
+    with open(input_file, 'r') as f:
+        data=str(f.readlines())
+    f.close()
+    length = len(data)-2
+    im_list = []
+    for ii in range(1,length//2):
+        nn = data[2*ii:2*ii+2]
+        if nn == '00':
+            im_list.append(0.)
+        elif nn == '10':
+            im_list.append(1.)
+        elif nn == '01':
+            im_list.append(2.)
+    im_mat = np.array(im_list)
+    return im_mat.reshape(image_properties.compressed_dims)
