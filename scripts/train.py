@@ -109,7 +109,7 @@ def main(**kwargs):
     parser.add_argument("-r", "--restore_path", help="path to model to be restored", type=str)
     parser.add_argument("-opt", "--optimizer", default="adam", help="Selected optimizer", type=str)
     parser.add_argument("-name", "--name", default="gan-train", help="Checkpoint/Tensorboard label")
-    parser.add_argument("-ds", "--dataset", default="cityscapes", help="choice of training dataset. Currently only supports cityscapes/ADE20k/faces", choices=set(("cityscapes", "ADE20k", "faces")), type=str)
+    parser.add_argument("-ds", "--dataset", default="faces", help="choice of training dataset. Currently only supports faces", choices=set(("faces")), type=str)
     args = parser.parse_args()
 
     # Launch training
